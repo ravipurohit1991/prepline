@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Databases
+*.db
+*.db-journal
+*.sqlite3
+
+# Environment
+.env
+.env.local
+
+# Claude / session artifacts
+.claude/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log

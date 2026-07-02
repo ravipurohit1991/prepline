@@ -1,0 +1,28 @@
+{
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit",
+      "source.fixAll.ruff": "explicit"
+    }
+  },
+  "isort.args": ["--profile", "black"],
+  "black-formatter.importStrategy": "fromEnvironment",
+  "ruff.importStrategy": "fromEnvironment",
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "typescript.tsdk": "frontend/node_modules/typescript/lib",
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": ["backend"]
+}
