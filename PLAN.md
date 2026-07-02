@@ -131,37 +131,22 @@ new snapshot to all connected sockets (multi-device: laptop + phone).
 - [x] Live smoke test: seeded plan schedules 23 steps, push 0, no warnings.
 - [x] `.vscode/settings.json`, `.gitignore`, `.gitattributes`, LICENSE (AGPL).
 
-## 6. Remaining work — in order
+## 6. Remaining work — status
 
-1. **End-to-end verification (in progress).** Server runs on :8000 (serves the
-   built frontend). Playwright + Chromium are installed in the session
-   scratchpad. Drive the real UI: library → meals → open score → Start cooking
-   → Fire / +5 min / Done / Undo; confirm WS broadcast by opening the same
-   session in a second page; probe error paths (delay a pending step → 409).
-2. **Screenshots with real demo data** → save into `docs/screenshots/`:
-   `score.png` (hero: fresh-seeded plan, `python -m app.seed --reset`),
-   `cook.png` (mid-service: `python -m app.demo --minutes-to-serve 40`, open
-   printed `/cook/<id>` URL), optionally `library.png`. Viewport 1440×900,
-   deviceScaleFactor 2.
-3. **README.md** (repo root) — must include: one-paragraph pitch (the
-   "everything ready at once" problem), hero screenshot + cook-mode screenshot
-   (real demo data), feature list, quickstart (backend: `uv sync`,
-   `uv run uvicorn app.main:app --reload` auto-seeds; frontend: `npm install`,
-   `npm run dev`; or single-origin: build frontend then run backend only),
-   "how the scheduler works" section (sell the algorithm), API sketch,
-   architecture diagram (mermaid), roadmap (recipe import/parsing, shopping
-   lists, multiple cooks assignment view, oven preheat modeling, PWA/mobile),
-   license note (AGPL-3.0).
-4. **CI** — `.github/workflows/ci.yml`: job 1 backend (uv sync, ruff check,
-   pytest), job 2 frontend (npm ci, vitest, tsc+vite build).
-5. **CONTRIBUTING.md** (short: setup, test commands, formatting = black/isort/
-   ruff + prettier) and `backend/.env.example` (PREPLINE_DATABASE_URL,
-   PREPLINE_SEED_ON_EMPTY, PREPLINE_CORS_ORIGINS).
-6. **Git init + commit + publish.** Local git config user "Ravi Purushottam"
-   <email from pyproject>. Conventional initial commit(s). `gh` CLI is NOT
-   available in this environment — after committing, hand the user:
-   `git remote add origin https://github.com/ravipurohit1991/prepline.git`
-   and `git push -u origin main`.
+- [x] End-to-end verification with Playwright on the real UI.
+- [x] Screenshots with real demo data saved to `docs/screenshots/`.
+- [x] `README.md` with pitch, screenshots, quickstart, scheduler deep-dive, API sketch, architecture diagram, roadmap, and license note.
+- [x] CI — `.github/workflows/ci.yml` with backend and frontend jobs.
+- [x] `CONTRIBUTING.md` and `backend/.env.example`.
+- [x] Git init + commit + publish to `https://github.com/ravipurohit1991/prepline.git`.
+
+## 7. Roadmap (future)
+
+- Recipe import/parsing (URL scrape, Markdown, Paprika export)
+- Shopping list generation with unit consolidation
+- Multi-cook assignment view
+- Oven preheat modeling
+- PWA / mobile install with offline cook mode
 
 ## 7. Constraints & conventions (do not violate)
 
