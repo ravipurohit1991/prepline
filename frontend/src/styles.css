@@ -616,6 +616,42 @@ a {
   animation: pulse-stroke 2s ease-in-out infinite;
 }
 
+.shopping-grid {
+  align-items: start;
+}
+
+.shopping-col h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.shopping-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.shopping-list li {
+  padding-left: 4px;
+}
+
+.shopping-list li + li {
+  margin-top: 4px;
+}
+
+.shopping-item {
+  display: block;
+}
+
+.shopping-meta {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tl-running-outline {
     animation: none;

@@ -102,6 +102,25 @@ export interface Schedule {
   warnings: Warning[];
 }
 
+export interface ShoppingListRecipeRef {
+  recipe_id: string;
+  recipe_name: string;
+}
+
+export interface ShoppingListItem {
+  display: string;
+  normalized: string;
+  count: number;
+  recipes: ShoppingListRecipeRef[];
+}
+
+export interface ShoppingList {
+  plan_id: string;
+  plan_name: string;
+  items: ShoppingListItem[];
+  warnings: Warning[];
+}
+
 export type StepStatus = 'pending' | 'running' | 'done';
 
 export interface SessionStep {

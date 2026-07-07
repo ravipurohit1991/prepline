@@ -5,7 +5,7 @@ import { api } from '../api/client';
 import type { Plan } from '../api/types';
 import { parseIso } from '../lib/time';
 
-function fmtServe(iso: string): string {
+export function fmtServe(iso: string): string {
   const date = parseIso(iso);
   return date.toLocaleString([], {
     weekday: 'short',
