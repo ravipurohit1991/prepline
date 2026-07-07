@@ -5,8 +5,9 @@ from app.core.db import get_db
 from app.core.timeutil import iso_utc
 from app.models import MealPlan, Recipe
 from app.scheduler import ScheduleError, compute_schedule
-from app.schemas import PlanIn, PlanOut, ResourcesIO
+from app.schemas import PlanIn, PlanOut, ResourcesIO, ShoppingListOut
 from app.services.planning import plan_resources, plan_steps, schedule_payload
+from app.services.shopping import build_shopping_list
 
 router = APIRouter(prefix="/plans", tags=["plans"])
 
@@ -91,3 +92,41 @@ def get_schedule(plan_id: str, db: Session = Depends(get_db)) -> dict:
     except ScheduleError as error:
         raise HTTPException(status_code=422, detail=str(error)) from error
     return schedule_payload(plan, schedule, recipes, missing)
+
+
+@router.get("/{plan_id}/shopping-list", response_model=ShoppingListOut)
+def get_shopping_list(plan_id: str, db: Session = Depends(get_db)) -> dict:
+    plan = _get_or_404(db, plan_id)
+    recipes: list[Recipe] = []
+    missing: list[str] = []
+    for recipe_id in plan.recipe_ids:
+        recipe = db.get(Recipe, recipe_id)
+        if recipe is None:
+            missing.append(recipe_id)
+        else:
+            recipes.append(recipe)
+    items = build_shopping_list(plan, recipes)
+    warnings = [
+        {
+            "code": "missing_recipe",
+            "message": f"A recipe in this plan no longer exists (id {recipe_id}).",
+            "step_id": None,
+        }
+        for recipe_id in missing
+    ]
+    return {
+        "plan_id": plan.id,
+        "plan_name": plan.name,
+        "items": [
+            {
+                "display": item.display,
+                "normalized": item.normalized,
+                "count": item.count,
+                "recipes": [
+                    {"recipe_id": r.recipe_id, "recipe_name": r.recipe_name} for r in item.recipes
+                ],
+            }
+            for item in items
+        ],
+        "warnings": warnings,
+    }
