@@ -7,6 +7,7 @@ import PlanNewPage from './pages/PlanNewPage';
 import PlansPage from './pages/PlansPage';
 import RecipeEditorPage from './pages/RecipeEditorPage';
 import ScorePage from './pages/ScorePage';
+import ShoppingListPage from './pages/ShoppingListPage';
 import { lightTheme } from './theme';
 
 export default function App() {
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="/meals" element={<PlansPage />} />
         <Route path="/meals/new" element={<PlanNewPage />} />
         <Route path="/meals/:planId" element={<ScorePage />} />
+        <Route path="/meals/:planId/shopping" element={<ShoppingListPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

@@ -1,6 +1,6 @@
 import { Button, Input } from '@fluentui/react-components';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import type { Plan, Recipe, Schedule } from '../api/types';
 import { Timeline, type TimelineBlock, type TimelineTrack } from '../components/Timeline';
@@ -134,6 +134,9 @@ export default function ScorePage() {
           <Button appearance="secondary" onClick={updateServe}>
             Reschedule
           </Button>
+          <Link to={`/meals/${plan.id}/shopping`}>
+            <Button appearance="secondary">Shopping list</Button>
+          </Link>
           <Button appearance="primary" disabled={starting} onClick={startCooking}>
             {starting ? 'Starting…' : 'Start cooking'}
           </Button>

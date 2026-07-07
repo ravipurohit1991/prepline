@@ -1,4 +1,4 @@
-import type { Plan, PlanIn, Recipe, RecipeIn, Schedule, SessionState } from './types';
+import type { Plan, PlanIn, Recipe, RecipeIn, Schedule, SessionState, ShoppingList } from './types';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
@@ -36,6 +36,7 @@ export const api = {
     request<Plan>(`/api/plans/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
   deletePlan: (id: string) => request<void>(`/api/plans/${id}`, { method: 'DELETE' }),
   getSchedule: (planId: string) => request<Schedule>(`/api/plans/${planId}/schedule`),
+  getShoppingList: (planId: string) => request<ShoppingList>(`/api/plans/${planId}/shopping-list`),
 
   createSession: (planId: string) =>
     request<SessionState>('/api/sessions', {

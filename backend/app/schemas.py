@@ -91,3 +91,22 @@ class EventIn(BaseModel):
     type: Literal["start_step", "complete_step", "delay_step", "reset_step", "finish"]
     step_id: str | None = None
     minutes: int = Field(default=5, ge=1, le=120)
+
+
+class ShoppingListRecipeRef(BaseModel):
+    recipe_id: str
+    recipe_name: str
+
+
+class ShoppingListItem(BaseModel):
+    display: str
+    normalized: str
+    count: int
+    recipes: list[ShoppingListRecipeRef]
+
+
+class ShoppingListOut(BaseModel):
+    plan_id: str
+    plan_name: str
+    items: list[ShoppingListItem]
+    warnings: list[dict]
