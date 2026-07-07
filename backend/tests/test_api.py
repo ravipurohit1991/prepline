@@ -170,6 +170,31 @@ def test_session_websocket_round_trip(client):
         assert error["type"] == "error"
 
 
+def test_plan_shopping_list_combines_ingredients(client):
+    first = make_recipe(client, "Dish One")
+    second = make_recipe(client, "Dish Two")
+    # Give the second recipe a duplicate-looking ingredient.
+    second["ingredients"].append("thing one")  # overlaps with first recipe's ingredient
+    plan = make_plan(client, [first["id"], second["id"]])
+
+    response = client.get(f"/api/plans/{plan['id']}/shopping-list")
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["plan_id"] == plan["id"]
+    assert data["plan_name"] == "Test Dinner"
+
+    displays = {item["display"] for item in data["items"]}
+    assert "thing one" in displays
+    butter = next(item for item in data["items"] if item["display"] == "thing one")
+    assert butter["count"] == 2
+    assert {ref["recipe_name"] for ref in butter["recipes"]} == {"Dish One", "Dish Two"}
+
+
+def test_plan_shopping_list_returns_404_for_unknown_plan(client):
+    response = client.get("/api/plans/nope/shopping-list")
+    assert response.status_code == 404
+
+
 def test_demo_seed_produces_a_valid_plan(seeded_client):
     recipes = seeded_client.get("/api/recipes").json()
     assert len(recipes) == 6
