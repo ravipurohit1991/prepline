@@ -22,6 +22,7 @@ Kitchen vocabulary is deliberate: *fire* a step, *service* for cook mode, *the p
 - **Live replanning** — `delay`, `done`, `undo`, and `fire` events update a running session; the engine reschedules everything remaining from "now".
 - **Multi-device sync** — open the same cook session on a laptop and phone; WebSocket broadcasts keep them in lockstep.
 - **Timeline score** — custom SVG timeline shows every dish lane, hands/burner/oven usage, serve flag, and a dashed late-ETA flag when the plan slips.
+- **Per-recipe serving overrides** — scale a dish up or down inside a plan; step durations and shopping-list quantities follow.
 - **Demo content included** — `Sunday Roast for Four` with 6 recipes and 23+ scheduled steps out of the box.
 - **Single-origin deploy** — build the frontend, then run the FastAPI backend; it serves `dist/` as an SPA with API fallback.
 
@@ -101,7 +102,7 @@ All times are naive UTC serialized as ISO-8601 with `Z`.
 | `GET /api/recipes/{id}` | Get a recipe with steps |
 | `PUT /api/recipes/{id}` | Update a recipe |
 | `GET /api/plans` | List meal plans |
-| `POST /api/plans` | Create a meal plan from recipes |
+| `POST /api/plans` | Create a meal plan from recipes (optional `recipe_servings` map) |
 | `POST /api/plans/{id}/schedule` | Generate/refresh the schedule |
 | `POST /api/sessions` | Start a cook session from a plan |
 | `GET /api/sessions/{id}` | Session snapshot |
