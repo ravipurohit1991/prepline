@@ -19,6 +19,7 @@ def plan_out(plan: MealPlan) -> PlanOut:
         serve_at=iso_utc(plan.serve_at),
         recipe_ids=plan.recipe_ids,
         resources=ResourcesIO(**(plan.resources or {})),
+        recipe_servings=dict(plan.recipe_servings or {}),
         created_at=iso_utc(plan.created_at),
     )
 
@@ -36,6 +37,17 @@ def _check_recipes(db: Session, recipe_ids: list[str]) -> None:
             raise HTTPException(status_code=422, detail=f"unknown recipe id {recipe_id}")
 
 
+def _check_servings(payload: PlanIn) -> None:
+    """Every key in ``recipe_servings`` must reference a recipe on the plan."""
+    recipe_set = set(payload.recipe_ids)
+    for recipe_id in payload.recipe_servings:
+        if recipe_id not in recipe_set:
+            raise HTTPException(
+                status_code=422,
+                detail=f"recipe_servings references unknown recipe id {recipe_id}",
+            )
+
+
 @router.get("", response_model=list[PlanOut])
 def list_plans(db: Session = Depends(get_db)) -> list[PlanOut]:
     plans = db.exec(select(MealPlan).order_by(MealPlan.created_at.desc())).all()
@@ -45,11 +57,13 @@ def list_plans(db: Session = Depends(get_db)) -> list[PlanOut]:
 @router.post("", response_model=PlanOut, status_code=201)
 def create_plan(payload: PlanIn, db: Session = Depends(get_db)) -> PlanOut:
     _check_recipes(db, payload.recipe_ids)
+    _check_servings(payload)
     plan = MealPlan(
         name=payload.name,
         serve_at=payload.serve_at,
         recipe_ids=payload.recipe_ids,
         resources=payload.resources.model_dump(),
+        recipe_servings=dict(payload.recipe_servings),
     )
     db.add(plan)
     db.commit()
@@ -66,10 +80,12 @@ def get_plan(plan_id: str, db: Session = Depends(get_db)) -> PlanOut:
 def update_plan(plan_id: str, payload: PlanIn, db: Session = Depends(get_db)) -> PlanOut:
     plan = _get_or_404(db, plan_id)
     _check_recipes(db, payload.recipe_ids)
+    _check_servings(payload)
     plan.name = payload.name
     plan.serve_at = payload.serve_at
     plan.recipe_ids = payload.recipe_ids
     plan.resources = payload.resources.model_dump()
+    plan.recipe_servings = dict(payload.recipe_servings)
     db.add(plan)
     db.commit()
     db.refresh(plan)

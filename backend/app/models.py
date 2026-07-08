@@ -49,6 +49,9 @@ class MealPlan(SQLModel, table=True):
     serve_at: datetime
     recipe_ids: list[str] = Field(default_factory=list, sa_column=Column(JSON))
     resources: dict = Field(default_factory=dict, sa_column=Column(JSON))
+    # Per-recipe serving overrides for this plan. Missing keys fall back to
+    # the recipe's own ``servings`` value when the plan is scheduled.
+    recipe_servings: dict[str, int] = Field(default_factory=dict, sa_column=Column(JSON))
     created_at: datetime = Field(default_factory=utcnow)
 
 

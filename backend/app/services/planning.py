@@ -49,7 +49,12 @@ def build_recipe(payload: RecipeIn) -> Recipe:
 
 
 def plan_steps(db: Session, plan: MealPlan) -> tuple[list[PlanStep], list[Recipe], list[str]]:
-    """Scheduler steps for a plan, its recipes in plan order, and missing recipe ids."""
+    """Scheduler steps for a plan, its recipes in plan order, and missing recipe ids.
+
+    Each step's ``duration`` is scaled from the recipe's base ``servings`` to
+    the per-plan override in ``plan.recipe_servings`` (falling back to the
+    recipe's own value).
+    """
     recipes: list[Recipe] = []
     missing: list[str] = []
     for recipe_id in plan.recipe_ids:
@@ -59,9 +64,13 @@ def plan_steps(db: Session, plan: MealPlan) -> tuple[list[PlanStep], list[Recipe
         else:
             recipes.append(recipe)
 
+    overrides = plan.recipe_servings or {}
     steps: list[PlanStep] = []
     for recipe in recipes:
+        target = overrides.get(recipe.id, recipe.servings)
+        scale = target / recipe.servings if recipe.servings > 0 else 1.0
         for row in sorted(recipe.steps, key=lambda s: s.position):
+            scaled_duration = max(1, int(round(row.duration_min * scale)))
             steps.append(
                 PlanStep(
                     id=row.id,
@@ -69,7 +78,7 @@ def plan_steps(db: Session, plan: MealPlan) -> tuple[list[PlanStep], list[Recipe
                     recipe_name=recipe.name,
                     name=row.name,
                     instruction=row.instruction,
-                    duration=row.duration_min,
+                    duration=scaled_duration,
                     attention=Attention(row.attention),
                     equipment=tuple(
                         EquipmentUse(kind=e["kind"], temp_c=e.get("temp_c")) for e in row.equipment
@@ -90,8 +99,15 @@ def plan_resources(plan: MealPlan) -> Resources:
     )
 
 
-def entry_payload(placement: Placement, plan: MealPlan) -> dict:
+def entry_payload(
+    placement: Placement,
+    plan: MealPlan,
+    recipe_servings: dict[str, int],
+) -> dict:
     step = placement.step
+    # Always report the effective servings for this step's recipe (override
+    # if present, otherwise the recipe's own ``servings`` value).
+    target = recipe_servings.get(step.recipe_id)
     return {
         "step_id": step.id,
         "recipe_id": step.recipe_id,
@@ -104,6 +120,7 @@ def entry_payload(placement: Placement, plan: MealPlan) -> dict:
         "hold_max_min": step.hold_max,
         "start": iso_utc(plan.serve_at + timedelta(minutes=placement.start)),
         "end": iso_utc(plan.serve_at + timedelta(minutes=placement.end)),
+        "servings": target,
     }
 
 
@@ -124,6 +141,8 @@ def schedule_payload(
                 "step_id": None,
             }
         )
+    overrides = plan.recipe_servings or {}
+    recipe_servings = {r.id: overrides.get(r.id, r.servings) for r in recipes}
     return {
         "plan_id": plan.id,
         "plan_name": plan.name,
@@ -132,7 +151,9 @@ def schedule_payload(
         "serve_push_min": schedule.serve_push,
         "start_at": iso_utc(plan.serve_at + timedelta(minutes=schedule.start)),
         "resources": plan.resources,
-        "recipes": [{"id": r.id, "name": r.name} for r in recipes],
-        "entries": [entry_payload(p, plan) for p in schedule.placements],
+        "recipes": [
+            {"id": r.id, "name": r.name, "servings": recipe_servings[r.id]} for r in recipes
+        ],
+        "entries": [entry_payload(p, plan, recipe_servings) for p in schedule.placements],
         "warnings": warnings,
     }

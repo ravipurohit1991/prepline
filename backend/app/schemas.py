@@ -67,11 +67,25 @@ class PlanIn(BaseModel):
     serve_at: datetime
     recipe_ids: list[str] = Field(min_length=1, max_length=12)
     resources: ResourcesIO = Field(default_factory=ResourcesIO)
+    # Optional per-recipe serving overrides for this plan. Keys must reference
+    # recipes in ``recipe_ids``; values must be in [1, 50]. Omitted recipes
+    # use their own ``servings`` value when the plan is scheduled.
+    recipe_servings: dict[str, int] = Field(default_factory=dict)
 
     @field_validator("serve_at")
     @classmethod
     def _normalize(cls, value: datetime) -> datetime:
         return to_naive_utc(value)
+
+    @field_validator("recipe_servings")
+    @classmethod
+    def _validate_servings(cls, value: dict[str, int]) -> dict[str, int]:
+        for recipe_id, servings in value.items():
+            if not isinstance(servings, int) or isinstance(servings, bool):
+                raise ValueError(f"recipe_servings[{recipe_id!r}] must be an integer")
+            if servings < 1 or servings > 50:
+                raise ValueError(f"recipe_servings[{recipe_id!r}] must be between 1 and 50")
+        return value
 
 
 class PlanOut(BaseModel):
@@ -80,6 +94,7 @@ class PlanOut(BaseModel):
     serve_at: str
     recipe_ids: list[str]
     resources: ResourcesIO
+    recipe_servings: dict[str, int]
     created_at: str
 
 
