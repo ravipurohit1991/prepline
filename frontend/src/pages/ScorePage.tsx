@@ -1,4 +1,4 @@
-import { Button, Input } from '@fluentui/react-components';
+import { Button, Input, SpinButton } from '@fluentui/react-components';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api/client';
@@ -13,6 +13,7 @@ import {
   parseIso,
   toLocalInputValue,
 } from '../lib/time';
+import { effectiveServings } from '../lib/scaling';
 import { hueFor } from '../theme';
 
 export default function ScorePage() {
@@ -24,6 +25,7 @@ export default function ScorePage() {
   const [serveLocal, setServeLocal] = useState('');
   const [error, setError] = useState('');
   const [starting, setStarting] = useState(false);
+  const [savingServingsId, setSavingServingsId] = useState<string | null>(null);
 
   const load = useCallback(() => {
     if (!planId) return;
@@ -46,10 +48,40 @@ export default function ScorePage() {
         serve_at: fromLocalInputValue(serveLocal),
         recipe_ids: plan.recipe_ids,
         resources: plan.resources,
+        recipe_servings: plan.recipe_servings,
       });
       load();
     } catch (e) {
       setError((e as Error).message);
+    }
+  };
+
+  const updateServingsFor = async (recipeId: string, value: number) => {
+    if (!plan) return;
+    const recipe = recipes.find((r) => r.id === recipeId);
+    if (!recipe) return;
+    const next = { ...plan.recipe_servings };
+    if (value === recipe.servings) {
+      delete next[recipeId];
+    } else {
+      next[recipeId] = value;
+    }
+    setSavingServingsId(recipeId);
+    setError('');
+    try {
+      const updated = await api.updatePlan(plan.id, {
+        name: plan.name,
+        serve_at: plan.serve_at,
+        recipe_ids: plan.recipe_ids,
+        resources: plan.resources,
+        recipe_servings: next,
+      });
+      setPlan(updated);
+      load();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSavingServingsId(null);
     }
   };
 
@@ -102,8 +134,14 @@ export default function ScorePage() {
   const miseRecipes = useMemo(() => {
     if (!plan) return [];
     return plan.recipe_ids
-      .map((id, i) => ({ recipe: recipes.find((r) => r.id === id), hue: hueFor(i) }))
-      .filter((x): x is { recipe: Recipe; hue: ReturnType<typeof hueFor> } => Boolean(x.recipe));
+      .map((id, i) => {
+        const recipe = recipes.find((r) => r.id === id);
+        if (!recipe) return null;
+        const target = effectiveServings(id, recipe.servings, plan.recipe_servings);
+        const isScaled = target !== recipe.servings;
+        return { recipe, hue: hueFor(i), target, isScaled };
+      })
+      .filter((x): x is NonNullable<typeof x> => Boolean(x));
   }, [plan, recipes]);
 
   if (!plan || !schedule) {
@@ -179,11 +217,30 @@ export default function ScorePage() {
         <>
           <h2 style={{ fontSize: 15, margin: '22px 0 0' }}>Mise en place</h2>
           <div className="mise-grid">
-            {miseRecipes.map(({ recipe, hue }) => (
+            {miseRecipes.map(({ recipe, hue, target, isScaled }) => (
               <div key={recipe.id} className="panel mise-col">
                 <h4>
                   <span className="hue-dot" style={{ background: hue.deep }} />
                   {recipe.name}
+                  <span
+                    className="servings-row"
+                    style={{ marginLeft: 'auto', fontWeight: 400, fontSize: 12 }}
+                  >
+                    <span className={`servings-badge${isScaled ? ' scaled' : ''}`}>
+                      serves {target}
+                    </span>
+                    <SpinButton
+                      className="servings-input"
+                      value={target}
+                      min={1}
+                      max={50}
+                      aria-label={`Servings for ${recipe.name}`}
+                      onChange={(_, d) => updateServingsFor(recipe.id, d.value ?? target)}
+                    />
+                    {savingServingsId === recipe.id && (
+                      <span style={{ fontSize: 11, color: 'var(--muted)' }}>saving…</span>
+                    )}
+                  </span>
                 </h4>
                 <ul>
                   {recipe.ingredients.map((ingredient) => (

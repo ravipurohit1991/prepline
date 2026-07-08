@@ -40,6 +40,7 @@ class SessionRuntime:
         self.plan_id = plan.id
         self.plan_name = plan.name
         self.serve_at = plan.serve_at
+        self.recipe_servings = dict(plan.recipe_servings or {})
         self.steps = steps
         self.steps_by_id = {s.id: s for s in steps}
         self.resources = resources
@@ -154,6 +155,7 @@ class SessionRuntime:
                     "planned_end": iso_utc(self.serve_at + timedelta(minutes=placement.end)),
                     "actual_start": state.get("started_at"),
                     "actual_end": state.get("finished_at"),
+                    "servings": self.recipe_servings.get(step.recipe_id),
                 }
             )
         return {
