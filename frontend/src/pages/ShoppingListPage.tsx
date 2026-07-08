@@ -2,25 +2,38 @@ import { Button } from '@fluentui/react-components';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../api/client';
-import type { Plan, ShoppingList } from '../api/types';
+import type { Plan, Recipe, ShoppingList } from '../api/types';
 import { WarningsBar } from '../components/WarningsBar';
 import { fmtServe } from './PlansPage';
 
 export default function ShoppingListPage() {
   const { planId } = useParams();
   const [plan, setPlan] = useState<Plan | null>(null);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [list, setList] = useState<ShoppingList | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (!planId) return;
-    Promise.all([api.getPlan(planId), api.getShoppingList(planId)])
-      .then(([planData, listData]) => {
+    Promise.all([api.getPlan(planId), api.getShoppingList(planId), api.listRecipes()])
+      .then(([planData, listData, recipeData]) => {
         setPlan(planData);
         setList(listData);
+        setRecipes(recipeData);
       })
       .catch((e: Error) => setError(e.message));
   }, [planId]);
+
+  const scaled = useMemo(() => {
+    if (!plan) return false;
+    const overrides = plan.recipe_servings ?? {};
+    return plan.recipe_ids.some((id) => {
+      const recipe = recipes.find((r) => r.id === id);
+      if (!recipe) return false;
+      const target = overrides[id];
+      return target !== undefined && target !== recipe.servings;
+    });
+  }, [plan, recipes]);
 
   const { uncategorized, byRecipe } = useMemo(() => {
     if (!list)
@@ -57,6 +70,14 @@ export default function ShoppingListPage() {
           <h1 className="page-title">{plan.name}</h1>
           <p className="page-sub">
             Shopping list · {fmtServe(plan.serve_at)} · {list.items.length} items
+            {scaled && (
+              <>
+                {' '}
+                <span className="servings-badge scaled" style={{ verticalAlign: 'middle' }}>
+                  scaled
+                </span>
+              </>
+            )}
           </p>
         </div>
         <div className="head-actions">

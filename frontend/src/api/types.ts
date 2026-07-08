@@ -59,6 +59,7 @@ export interface Plan {
   serve_at: string;
   recipe_ids: string[];
   resources: Resources;
+  recipe_servings: Record<string, number>;
   created_at: string;
 }
 
@@ -67,6 +68,7 @@ export interface PlanIn {
   serve_at: string;
   recipe_ids: string[];
   resources: Resources;
+  recipe_servings?: Record<string, number>;
 }
 
 export interface ScheduleEntry {
@@ -81,6 +83,7 @@ export interface ScheduleEntry {
   hold_max_min: number;
   start: string;
   end: string;
+  servings: number | null;
 }
 
 export interface Warning {
@@ -97,7 +100,7 @@ export interface Schedule {
   serve_push_min: number;
   start_at: string;
   resources: Resources;
-  recipes: { id: string; name: string }[];
+  recipes: { id: string; name: string; servings: number }[];
   entries: ScheduleEntry[];
   warnings: Warning[];
 }
@@ -138,6 +141,7 @@ export interface SessionStep {
   planned_end: string;
   actual_start: string | null;
   actual_end: string | null;
+  servings: number | null;
 }
 
 export interface SessionState {
